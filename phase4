@@ -1,0 +1,18 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+# get command-line arguments
+
+if ( scalar @ARGV != 7 ) {
+  die qq{Usage: $0 dampening_quantizer original_y4m previous_iteration_ivf previous_iteration_entering_state entering_state output_ivf exiting_state};
+}
+
+my ( $dampening_quantizer, $original_y4m, $previous_iteration_ivf,
+     $previous_iteration_entering_state, $entering_state,
+     $output_ivf, $exiting_state ) = @ARGV;
+
+# run xc-enc
+
+system qq{xc-enc -i y4m -r -I ${entering_state} -O ${exiting_state} -S ${previous_iteration_entering_state} -p ${previous_iteration_ivf} -o ${output_ivf} --s-ac-qi ${dampening_quantizer} --refine-sw ${original_y4m}}
+  and die q{xc-enc exiting with error};

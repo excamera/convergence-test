@@ -1,0 +1,117 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+my $cq_level = 16;
+my $dampening_quantizer = 32;
+
+my $phase2b_repeats = 1;
+my $phase3_repeats = 5;
+
+my ( @orig_videos ) = @ARGV;
+my $N_chunks = scalar @orig_videos;
+
+sub video_basename {
+  my ( $filename ) = @_;
+  my ( $basename ) = $filename =~ m{(.*?)\.y4m$};
+  die unless defined $basename;
+  return $basename;
+};
+
+my $global_iteration_counter = 0;
+
+# phase 1
+for ( my $i = 0; $i < $N_chunks; $i++ ) {
+  my $this_input_video = $orig_videos[ $i ];
+  my $chunk_name = video_basename( $this_input_video );
+
+  system qq{./phase1 ${this_input_video} ${cq_level} outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state}
+    and die q{phase1 exited with error};
+}
+$global_iteration_counter++;
+
+# phase 2a
+for ( my $i = 0; $i < $N_chunks; $i++ ) {
+  my $this_input_video = $orig_videos[ $i ];
+  my $chunk_name = video_basename( $this_input_video );
+  my $last_chunk_name = video_basename( $orig_videos[ ($i - 1) % $N_chunks ] );
+  my $last_iteration = $global_iteration_counter - 1;
+
+  system qq{./phase2a ${this_input_video} outputs/${chunk_name}.${last_iteration}.ivf outputs/${last_chunk_name}.${last_iteration}.exit.state outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state}
+    and die q{phase2a exited with error};
+}
+$global_iteration_counter++;
+
+# phase 2b
+for ( my $iteration = 0; $iteration < $phase2b_repeats; $iteration++, $global_iteration_counter++ ) {
+  for ( my $i = 0; $i < $N_chunks; $i++ ) {
+    my $this_input_video = $orig_videos[ $i ];
+    my $chunk_name = video_basename( $this_input_video );
+    my $last_chunk_name = video_basename( $orig_videos[ ($i - 1) % $N_chunks ] );
+    my $last_iteration = $global_iteration_counter - 1;
+    my $last_last_iteration = $last_iteration - 1;
+
+    die unless ( $last_last_iteration >= 0 );
+
+    system qq{./phase2b ${this_input_video} outputs/${chunk_name}.${last_iteration}.ivf outputs/${last_chunk_name}.${last_last_iteration}.exit.state outputs/${last_chunk_name}.${last_iteration}.exit.state outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state}
+      and die q{phase2a exited with error};
+  }
+}
+
+# phase 3
+for ( my $iteration = 0; $iteration < $phase3_repeats; $iteration++, $global_iteration_counter++ ) {
+  for ( my $i = 0; $i < $N_chunks; $i++ ) {
+    my $this_input_video = $orig_videos[ $i ];
+    my $chunk_name = video_basename( $this_input_video );
+    my $last_chunk_name = video_basename( $orig_videos[ ($i - 1) % $N_chunks ] );
+    my $last_iteration = $global_iteration_counter - 1;
+    my $last_last_iteration = $last_iteration - 1;
+
+    die unless ( $last_last_iteration >= 0 );
+
+    system qq{./phase3 ${dampening_quantizer} ${this_input_video} outputs/${chunk_name}.${last_iteration}.ivf outputs/${last_chunk_name}.${last_last_iteration}.exit.state outputs/${last_chunk_name}.${last_iteration}.exit.state outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state}
+      and die q{phase3 exited with error};
+  }
+}
+
+# phase 4
+for ( my $i = 0; $i < $N_chunks; $i++ ) {
+  my $this_input_video = $orig_videos[ $i ];
+  my $chunk_name = video_basename( $this_input_video );
+  my $last_chunk_name = video_basename( $orig_videos[ ($i - 1) % $N_chunks ] );
+  my $last_iteration = $global_iteration_counter - 1;
+  my $last_last_iteration = $last_iteration - 1;
+
+  die unless ( $last_last_iteration >= 0 );
+
+  system qq{./phase4 ${dampening_quantizer} ${this_input_video} outputs/${chunk_name}.${last_iteration}.ivf outputs/${last_chunk_name}.${last_last_iteration}.exit.state outputs/${last_chunk_name}.${last_iteration}.exit.state outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state}
+    and die q{phase4 exited with error};
+}
+$global_iteration_counter++;
+
+# phase 5
+for ( my $i = 0; $i < $N_chunks; $i++ ) {
+  my $this_input_video = $orig_videos[ $i ];
+  my $chunk_name = video_basename( $this_input_video );
+  my $last_chunk_name = video_basename( $orig_videos[ ($i - 1) % $N_chunks ] );
+  my $last_iteration = $global_iteration_counter - 1;
+  my $last_last_iteration = $last_iteration - 1;
+
+  die unless ( $last_last_iteration >= 0 );
+
+  system qq{./phase5 ${dampening_quantizer} ${this_input_video} outputs/${chunk_name}.${last_iteration}.ivf outputs/${last_chunk_name}.${last_last_iteration}.exit.state outputs/${last_chunk_name}.${last_iteration}.exit.state outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state}
+      and die q{phase5 exited with error};
+}
+
+
+# compare states
+
+for ( my $i = 0; $i < $N_chunks; $i++ ) {
+  my $this_input_video = $orig_videos[ $i ];
+  my $chunk_name = video_basename( $this_input_video );
+  my $last_chunk_name = video_basename( $orig_videos[ ($i - 1) % $N_chunks ] );
+  my $last_iteration = $global_iteration_counter - 1;
+
+  system qq{comp-states outputs/${chunk_name}.${global_iteration_counter}.exit.state outputs/${chunk_name}.${last_iteration}.exit.state}
+    and die q{comp-states exited with error};
+}

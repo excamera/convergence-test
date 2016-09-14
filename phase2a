@@ -1,0 +1,18 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+# get command-line arguments
+
+if ( scalar @ARGV != 5 ) {
+  die qq{Usage: $0 original_y4m previous_iteration_ivf entering_state output_ivf exiting_state};
+}
+
+my ( $original_y4m, $previous_iteration_ivf,
+     $entering_state,
+     $output_ivf, $exiting_state ) = @ARGV;
+
+# run xc-enc
+
+system qq{xc-enc -i y4m -r -I ${entering_state} -O ${exiting_state} -p ${previous_iteration_ivf} -o ${output_ivf} ${original_y4m}}
+  and die q{xc-enc exiting with error};

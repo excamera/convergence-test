@@ -1,0 +1,22 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+# get command-line arguments
+
+if ( scalar @ARGV != 4 ) {
+  die qq{Usage: $0 input_video cq_level output_ivf exiting_state};
+}
+
+my ( $input_video, $cq_level, $output_ivf, $exiting_state ) = @ARGV;
+
+# run vpxenc
+
+system qq{vpxenc --codec=vp8 --cpu-used=0 --end-usage=cq --min-q=0 --max-q=63 --cq-level=${cq_level} --passes=2 --auto-alt-ref=1 --target-bitrate=4294967295 --threads=1 --token-parts=0 --tune=ssim --ivf -o ${output_ivf} ${input_video}}
+  and die qq{vpxenc exited with error};
+
+# run xc-dump
+
+system qq{xc-dump ${output_ivf} ${exiting_state}}
+  and die qq{xc-dump exited with error};
+
