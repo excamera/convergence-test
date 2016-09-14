@@ -14,7 +14,7 @@ my $N_chunks = scalar @orig_videos;
 
 sub video_basename {
   my ( $filename ) = @_;
-  my ( $basename ) = basename( $filename );
+  my ( $basename ) = basename( $filename, ".y4m" );
   die unless defined $basename;
   return $basename;
 };
