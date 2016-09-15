@@ -4,15 +4,15 @@ use strict;
 
 # get command-line arguments
 
-if ( scalar @ARGV != 7 ) {
-  die qq{Usage: $0 dampening_quantizer original_y4m previous_iteration_ivf previous_iteration_entering_state entering_state output_ivf exiting_state};
+if ( scalar @ARGV != 6 ) {
+  die qq{Usage: $0 original_y4m previous_iteration_ivf previous_iteration_entering_state entering_state output_ivf exiting_state};
 }
 
-my ( $dampening_quantizer, $original_y4m, $previous_iteration_ivf,
+my ( $original_y4m, $previous_iteration_ivf,
      $previous_iteration_entering_state, $entering_state,
      $output_ivf, $exiting_state ) = @ARGV;
 
 # run xc-enc
 
-system qq{xc-enc -i y4m -r -I ${entering_state} -O ${exiting_state} -S ${previous_iteration_entering_state} -p ${previous_iteration_ivf} -o ${output_ivf} --s-ac-qi ${dampening_quantizer} --refine-sw --fix-prob-tables ${original_y4m}}
+system qq{xc-enc -i y4m -r -I ${entering_state} -O ${exiting_state} -S ${previous_iteration_entering_state} -p ${previous_iteration_ivf} -o ${output_ivf} --refine-sw --fix-prob-tables ${original_y4m}}
   and die q{xc-enc exiting with error};

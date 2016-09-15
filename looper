@@ -3,13 +3,12 @@
 use strict;
 use File::Basename;
 
-my $cq_level = 16;
-my $dampening_quantizer = 32;
-
-my $phase2b_repeats = 1;
-my $phase3_repeats = 2;
-
 my ( @orig_videos ) = @ARGV;
+
+my $cq_level = 50;
+
+my $phase3_repeats = 5;
+
 my $N_chunks = scalar @orig_videos;
 
 sub video_basename {
@@ -32,37 +31,20 @@ for ( my $i = 0; $i < $N_chunks; $i++ ) {
 }
 $global_iteration_counter++;
 
-# phase 2a
-print STDERR "=== Phase 2a ===\n";
+# phase 3a
+print STDERR "=== Phase 3a ===\n";
 for ( my $i = 0; $i < $N_chunks; $i++ ) {
   my $this_input_video = $orig_videos[ $i ];
   my $chunk_name = video_basename( $this_input_video );
   my $last_chunk_name = video_basename( $orig_videos[ ($i - 1) % $N_chunks ] );
   my $last_iteration = $global_iteration_counter - 1;
 
-  system qq{./phase2a ${this_input_video} outputs/${chunk_name}.${last_iteration}.ivf outputs/${last_chunk_name}.${last_iteration}.exit.state outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state}
-    and die q{phase2a exited with error};
+  system qq{./phase3a ${this_input_video} outputs/${chunk_name}.${last_iteration}.ivf  outputs/${last_chunk_name}.${last_iteration}.exit.state outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state}
+    and die q{phase3a exited with error};
 }
 $global_iteration_counter++;
 
-# phase 2b
-for ( my $iteration = 0; $iteration < $phase2b_repeats; $iteration++, $global_iteration_counter++ ) {
-  print STDERR "=== Phase 2b (run ${iteration}) ===\n";
-  for ( my $i = 0; $i < $N_chunks; $i++ ) {
-    my $this_input_video = $orig_videos[ $i ];
-    my $chunk_name = video_basename( $this_input_video );
-    my $last_chunk_name = video_basename( $orig_videos[ ($i - 1) % $N_chunks ] );
-    my $last_iteration = $global_iteration_counter - 1;
-    my $last_last_iteration = $last_iteration - 1;
-
-    die unless ( $last_last_iteration >= 0 );
-
-    system qq{./phase2b ${this_input_video} outputs/${chunk_name}.${last_iteration}.ivf outputs/${last_chunk_name}.${last_last_iteration}.exit.state outputs/${last_chunk_name}.${last_iteration}.exit.state outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state}
-      and die q{phase2a exited with error};
-  }
-}
-
-# phase 3
+# phase 3b
 for ( my $iteration = 0; $iteration < $phase3_repeats; $iteration++, $global_iteration_counter++ ) {
   print STDERR "=== Phase 3 (run ${iteration}) ===\n";
   for ( my $i = 0; $i < $N_chunks; $i++ ) {
@@ -72,12 +54,12 @@ for ( my $iteration = 0; $iteration < $phase3_repeats; $iteration++, $global_ite
     my $last_iteration = $global_iteration_counter - 1;
     my $last_last_iteration = $last_iteration - 1;
 
-    my $reencode_flag = ( $phase3_repeats > 1 and $iteration == 1 ) ? 'yes' : 'no';
+    my $reencode_flag = ( $phase3_repeats > 0 and $iteration == 1 ) ? 'yes' : 'no';
 
     die unless ( $last_last_iteration >= 0 );
 
-    system qq{./phase3 ${dampening_quantizer} ${this_input_video} outputs/${chunk_name}.${last_iteration}.ivf outputs/${last_chunk_name}.${last_last_iteration}.exit.state outputs/${last_chunk_name}.${last_iteration}.exit.state outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state ${reencode_flag}}
-      and die q{phase3 exited with error};
+    system qq{./phase3b ${this_input_video} outputs/${chunk_name}.${last_iteration}.ivf outputs/${last_chunk_name}.${last_last_iteration}.exit.state outputs/${last_chunk_name}.${last_iteration}.exit.state outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state ${reencode_flag}}
+      and die q{phase3b exited with error};
   }
 }
 
@@ -90,11 +72,11 @@ for ( my $i = 0; $i < $N_chunks; $i++ ) {
   my $last_iteration = $global_iteration_counter - 1;
   my $last_last_iteration = $last_iteration - 1;
 
-  my $reencode_flag = ( $phase3_repeats <= 1 ) ? 'yes' : 'no';
+  my $reencode_flag = ( $phase3_repeats <= 0 ) ? 'yes' : 'no';
 
   die unless ( $last_last_iteration >= 0 );
 
-  system qq{./phase4 ${dampening_quantizer} ${this_input_video} outputs/${chunk_name}.${last_iteration}.ivf outputs/${last_chunk_name}.${last_last_iteration}.exit.state outputs/${last_chunk_name}.${last_iteration}.exit.state outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state ${reencode_flag}}
+  system qq{./phase4 ${this_input_video} outputs/${chunk_name}.${last_iteration}.ivf outputs/${last_chunk_name}.${last_last_iteration}.exit.state outputs/${last_chunk_name}.${last_iteration}.exit.state outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state ${reencode_flag}}
     and die q{phase4 exited with error};
 }
 $global_iteration_counter++;
@@ -110,7 +92,7 @@ for ( my $i = 0; $i < $N_chunks; $i++ ) {
 
   die unless ( $last_last_iteration >= 0 );
 
-  system qq{./phase5 ${dampening_quantizer} ${this_input_video} outputs/${chunk_name}.${last_iteration}.ivf outputs/${last_chunk_name}.${last_last_iteration}.exit.state outputs/${last_chunk_name}.${last_iteration}.exit.state outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state}
+  system qq{./phase5 ${this_input_video} outputs/${chunk_name}.${last_iteration}.ivf outputs/${last_chunk_name}.${last_last_iteration}.exit.state outputs/${last_chunk_name}.${last_iteration}.exit.state outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state}
       and die q{phase5 exited with error};
 }
 

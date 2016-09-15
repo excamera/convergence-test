@@ -2,6 +2,8 @@
 
 use strict;
 
+die "Phase 2 is dead.";
+
 # get command-line arguments
 
 if ( scalar @ARGV != 5 ) {

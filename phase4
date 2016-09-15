@@ -4,11 +4,11 @@ use strict;
 
 # get command-line arguments
 
-if ( scalar @ARGV != 8 ) {
-  die qq{Usage: $0 dampening_quantizer original_y4m previous_iteration_ivf previous_iteration_entering_state entering_state output_ivf exiting_state reencode_first};
+if ( scalar @ARGV != 7 ) {
+  die qq{Usage: $0 original_y4m previous_iteration_ivf previous_iteration_entering_state entering_state output_ivf exiting_state reencode_first};
 }
 
-my ( $dampening_quantizer, $original_y4m, $previous_iteration_ivf,
+my ( $original_y4m, $previous_iteration_ivf,
      $previous_iteration_entering_state, $entering_state,
      $output_ivf, $exiting_state, $reencode_first ) = @ARGV;
 
@@ -20,5 +20,5 @@ if ( $reencode_first eq "yes" ) {
   $extra_arg = "--reencode-first-frame";
 }
 
-system qq{xc-enc ${extra_arg} -i y4m -r -I ${entering_state} -O ${exiting_state} -S ${previous_iteration_entering_state} -p ${previous_iteration_ivf} -o ${output_ivf} --s-ac-qi ${dampening_quantizer} --refine-sw ${original_y4m}}
+system qq{xc-enc ${extra_arg} -i y4m -r -I ${entering_state} -O ${exiting_state} -S ${previous_iteration_entering_state} -p ${previous_iteration_ivf} -o ${output_ivf} --refine-sw ${original_y4m}}
   and die q{xc-enc exiting with error};
