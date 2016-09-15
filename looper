@@ -72,9 +72,11 @@ for ( my $iteration = 0; $iteration < $phase3_repeats; $iteration++, $global_ite
     my $last_iteration = $global_iteration_counter - 1;
     my $last_last_iteration = $last_iteration - 1;
 
+    my $reencode_flag = ( $phase3_repeats > 1 and $iteration == 1 ) ? 'yes' : 'no';
+
     die unless ( $last_last_iteration >= 0 );
 
-    system qq{./phase3 ${dampening_quantizer} ${this_input_video} outputs/${chunk_name}.${last_iteration}.ivf outputs/${last_chunk_name}.${last_last_iteration}.exit.state outputs/${last_chunk_name}.${last_iteration}.exit.state outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state}
+    system qq{./phase3 ${dampening_quantizer} ${this_input_video} outputs/${chunk_name}.${last_iteration}.ivf outputs/${last_chunk_name}.${last_last_iteration}.exit.state outputs/${last_chunk_name}.${last_iteration}.exit.state outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state ${reencode_flag}}
       and die q{phase3 exited with error};
   }
 }
@@ -88,9 +90,11 @@ for ( my $i = 0; $i < $N_chunks; $i++ ) {
   my $last_iteration = $global_iteration_counter - 1;
   my $last_last_iteration = $last_iteration - 1;
 
+  my $reencode_flag = ( $phase3_repeats <= 1 ) ? 'yes' : 'no';
+
   die unless ( $last_last_iteration >= 0 );
 
-  system qq{./phase4 ${dampening_quantizer} ${this_input_video} outputs/${chunk_name}.${last_iteration}.ivf outputs/${last_chunk_name}.${last_last_iteration}.exit.state outputs/${last_chunk_name}.${last_iteration}.exit.state outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state}
+  system qq{./phase4 ${dampening_quantizer} ${this_input_video} outputs/${chunk_name}.${last_iteration}.ivf outputs/${last_chunk_name}.${last_last_iteration}.exit.state outputs/${last_chunk_name}.${last_iteration}.exit.state outputs/${chunk_name}.${global_iteration_counter}.ivf outputs/${chunk_name}.${global_iteration_counter}.exit.state ${reencode_flag}}
     and die q{phase4 exited with error};
 }
 $global_iteration_counter++;
