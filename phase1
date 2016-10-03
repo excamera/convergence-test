@@ -17,6 +17,8 @@ system qq{vpxenc --codec=vp8 --cpu-used=0 --end-usage=cq --min-q=0 --max-q=63 --
 
 # run xc-dump
 
-system qq{xc-dump ${output_ivf} ${exiting_state}}
-  and die qq{xc-dump exited with error};
+system qq{xc-terminate-chunk ${output_ivf} ${output_ivf}.temp ${exiting_state}}
+  and die qq{xc-terminate-chunk exited with error};
 
+system qq{mv ${output_ivf}.temp ${output_ivf}}
+  and die qq{mv failed}

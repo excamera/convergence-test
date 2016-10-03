@@ -2,8 +2,6 @@
 
 use strict;
 
-die "Phase 2 is dead.";
-
 # get command-line arguments
 
 if ( scalar @ARGV != 5 ) {
@@ -16,5 +14,5 @@ my ( $original_y4m, $previous_iteration_ivf,
 
 # run xc-enc
 
-system qq{xc-enc -i y4m -r -I ${entering_state} -O ${exiting_state} -p ${previous_iteration_ivf} -o ${output_ivf} ${original_y4m}}
+system qq{echo | xc-enc -i y4m -r -I ${entering_state} -O ${exiting_state} -p ${previous_iteration_ivf} -o ${output_ivf} ${original_y4m}}
   and die q{xc-enc exiting with error};
